@@ -1,0 +1,146 @@
+Visit web page
+https://www.mi.uni-hamburg.de/en/arbeitsgruppen/theoretische-meteorologie/modelle/puma.html
+
+Download PUMA User's Guide - Version 16 
+This User's Guide contains everything you need.
+If you need further information check it out!
+
+Open a terminal window and make directory ~/PUMA 
+> mkdir PUMA
+ 
+Download plasim.tgz file into directory ~/PUMA
+
+Change into ~/PUMA directory
+> cd ~/PUMA
+
+Extract PlaSim_0318.tgz using
+> tar -zxvf PlaSim_0318.tgz
+
+Run "./configure.sh" in this directory
+> ./configure.sh
+
+Run the "Model Starter" using
+> ./most.x
+
+Choose model "PUMA" with a mouse click.
+Click on the button "Save & Run" for model building and execution.
+
+-----------------------------------
+
+Running long simulations
+
+Run the "Model Starter" using
+> ./most.x
+
+Select model and resolution
+Switch GUI off
+Switch Output on
+Edit number of years to run
+Edit other parameters (may be changed later in puma_namlist file)
+Click on "Save & Exit"
+
+Make a directory on a local disk with enough space, 
+> mkdir /localDisk/dataDirectory
+
+Copy runs directory to data directory
+> cp ~/PUMA/puma/run/* /localDisk/dataDirectory
+
+> cd /localDisk/dataDirectory
+
+Edit the experiment name in most_puma_run
+I used the name myExp.
+
+Edit the namelist files (puma_namelist) if necessary
+puma_namelist contains the parameters of the simulation (see PUMA User's Guide)
+
+Start the simulation with
+> most_puma_run &
+
+-----------------------------------
+
+Read output of long simulations
+
+> ls -lart
+
+PUMA has produced files puma_sp_init, myExp_REST.001, myExp_DIAG.001, myExp.001
+and directory puma_restart (this directory contains restart files)
+
+myExp.001 is file with model output
+
+Now we need to compile and use the postprocessor (burn7) to process output. 
+So go back to directory 
+> cd ~/PUMA/
+
+Change into directory of postprocessor (also called afterburner)
+> cd postprocessor
+
+A quick reference card for the usage of burn7 can be found in this directory in file "burn7qr.pdf".
+
+But first we need to compile the postprocessor and type
+> make
+
+The postprocessor is a C++ program requiring the NetCDF C++ library
+The makefile is configured to look for:
+1) The include file "netcdfcpp.h" in directory /opt/local/include
+2) The library file "libnetcdf_c++.*" in directory /opt/local/lib
+
+Doing "make" should not produces errors (hopefully).
+
+After successfull compilation copy the executable "burn7.x" to ~/bin
+and make sure, that the PATH variable includes $HOME/bin with
+> echo $PATH
+
+If this is the case, burn7.x can be executed from every directory.
+
+Now open a new terminal (a new shell is needed to garanty that burn7.x is available) 
+and go back to the data directory
+> cd /localDisk/dataDirectory
+
+Type for usage
+> burn7.x
+
+To process data type we first have to specify what the postprocessor should do.
+This is done by a namelist.
+
+Create and edit namelist scriptfile "doBurn7" within dataDirectory
+
+Example:
+nano doBurn7
+
+VTYPE  = Pressure
+HTYPE  = Grid
+CODE   = 134 	#surface pressure
+hPa    = 1000
+MEAN   = 0
+GRIB   = 0
+NETCDF = 1
+MULTI  = 92 	#for 92 input files 
+
+Check burn pdf for more details
+
+Copy file doBurn7 in the data directory and execute it as following
+> burn7.x infile outfile.nc <doBurn7 >burn7.out
+
+Look at burn7.out and you see, what burn7.x did.
+>cat burn7.out
+>ncdump -h outfile.nc
+
+Check out doBurn7:
+ It writes a file namelist and executes burn7.x
+ $1 and $2 are the first and second argument given to doBurn7
+
+The data are now in outfile.nc if NETCDF in namelist is 1.
+You can now start R and read the data using readPUMAnc.r.
+
+----------------------------------
+
+Here's your exercise:
+
+Compare SLP of observations (GMSLP from former exercises) with PUMA data.
+Does PUMA reproduce features of observations?
+
+To this end, run PUMA for 92 years, take out december months and compare 
+mean(SLP) and first and second EOF for regions:
+Euroatlantic and Tropics.
+
+Good luck!
